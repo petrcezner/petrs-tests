@@ -1,6 +1,5 @@
-import cv2
-import numpy as np
-import simplejpeg
+import datetime
+from flask import Flask, Response, render_template
 from confluent_kafka import Consumer
 
 topic = "distributed-video1"
@@ -26,20 +25,30 @@ def on_assign(a_consumer, partitions):
 
 consumer.subscribe([topic], on_assign=on_assign)
 
-try:
-    while True:
-        msg = consumer.poll(1.0)
+app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return render_template(r'index.html')
+
+@app.route('/video', methods=['GET'])
+def video():
+    return Response(
+        get_video_stream(),
+        mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+def get_video_stream():
+    while True:
+        msg = consumer.poll(6.0)
         if msg is None:
             continue
         if msg.error():
             print("Consumer error: {}".format(msg.error()))
             continue
-        img = simplejpeg.decode_jpeg(msg.value(), colorspace='BGR')
-        # img = cv2.imdecode(np.fromstring(msg.value(), np.uint8),
-        #                    cv2.IMREAD_COLOR)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpg\r\n\r\n' + msg.value() + b'\r\n\r\n')
 
-        cv2.imshow('img', img)
-        cv2.waitKey(1)
-except KeyboardInterrupt:
-    consumer.close()
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5001, debug=False)

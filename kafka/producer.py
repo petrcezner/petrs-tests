@@ -3,6 +3,7 @@ import sys
 import time
 import cv2
 from confluent_kafka import Producer
+import simplejpeg
 
 topic = "distributed-video1"
 
@@ -31,7 +32,7 @@ def publish_video(video_file):
         ret, buffer = cv2.imencode('.jpg', frame)
         producer.produce(topic, buffer.tobytes(), callback=delivery_report)
         time.sleep(0.01)
-
+        producer.flush()
     video.release()
     producer.flush()
     logger.info('Publish complete')
@@ -45,8 +46,12 @@ def publish_camera():
         while True:
             success, frame = camera.read()
             ret, buffer = cv2.imencode('.jpg', frame)
-            producer.produce(topic, buffer.tobytes(), callback=delivery_report)
+            # jpg_buffer = simplejpeg.encode_jpeg(frame,
+            #                                     quality=75,
+            #                                     colorspace='BGR')
+            producer.produce(topic, buffer, callback=delivery_report)
             time.sleep(0.001)
+            producer.poll(0)
     except KeyboardInterrupt:
         camera.release()
         producer.flush()
