@@ -1,4 +1,3 @@
-import datetime
 from flask import Flask, Response, render_template
 from confluent_kafka import Consumer
 
@@ -10,6 +9,7 @@ settings = {
     "client.id": "my-work-client-1",
     "enable.auto.commit": False,
     "session.timeout.ms": 6000,
+    "max.partition.fetch.bytes": 10485880,
     "default.topic.config": {"auto.offset.reset": "largest"},
 }
 consumer = Consumer(settings)
@@ -27,9 +27,11 @@ consumer.subscribe([topic], on_assign=on_assign)
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
     return render_template(r'index.html')
+
 
 @app.route('/video', methods=['GET'])
 def video():

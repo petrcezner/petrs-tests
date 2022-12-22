@@ -45,10 +45,10 @@ def publish_camera():
     try:
         while True:
             success, frame = camera.read()
-            ret, buffer = cv2.imencode('.jpg', frame)
-            # jpg_buffer = simplejpeg.encode_jpeg(frame,
-            #                                     quality=75,
-            #                                     colorspace='BGR')
+            # ret, buffer = cv2.imencode('.jpg', frame)
+            buffer = simplejpeg.encode_jpeg(frame,
+                                            quality=95,
+                                            colorspace='BGR')
             producer.produce(topic, buffer, callback=delivery_report)
             time.sleep(0.001)
             producer.poll(0)
