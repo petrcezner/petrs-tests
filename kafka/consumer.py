@@ -1,41 +1,44 @@
-import datetime
-from flask import Flask, Response
+import cv2
+import numpy as np
 from confluent_kafka import Consumer
 
 topic = "distributed-video1"
 
-c = Consumer({
+settings = {
     'bootstrap.servers': 'localhost:29092',
-    'group.id': 'mygroup',
-    'auto.offset.reset': 'earliest'
-})
-
-c.subscribe([topic])
-
-app = Flask(__name__)
-
-
-@app.route('/video', methods=['GET'])
-def video():
-    """
-    This is the heart of our video display. Notice we set the mimetype to
-    multipart/x-mixed-replace. This tells Flask to replace any old images with
-    new values streaming through the pipeline.
-    """
-    return Response(
-        get_video_stream(),
-        mimetype='multipart/x-mixed-replace; boundary=frame')
+    "group.id": "my-work-group",
+    "client.id": "my-work-client-1",
+    "enable.auto.commit": False,
+    "session.timeout.ms": 6000,
+    "default.topic.config": {"auto.offset.reset": "largest"},
+}
+consumer = Consumer(settings)
 
 
-def get_video_stream():
-    """
-    Here is where we recieve streamed images from the Kafka Server and convert
-    them to a Flask-readable format.
-    """
-    msg = c.poll(1.0)
-    yield (b'--frame\r\n'
-           b'Content-Type: image/jpg\r\n\r\n' + msg.value() + b'\r\n\r\n')
+def on_assign(a_consumer, partitions):
+    # get offset tuple from the first partition
+    last_offset = a_consumer.get_watermark_offsets(partitions[0])
+    # position [1] being the last index
+    partitions[0].offset = last_offset[1] - 1
+    consumer.assign(partitions)
 
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+consumer.subscribe([topic], on_assign=on_assign)
+
+try:
+    while True:
+        msg = consumer.poll(1.0)
+
+        if msg is None:
+            continue
+        if msg.error():
+            print("Consumer error: {}".format(msg.error()))
+            continue
+
+        img = cv2.imdecode(np.fromstring(msg.value(), np.uint8),
+                           cv2.IMREAD_COLOR)
+
+        cv2.imshow('img', img)
+        cv2.waitKey(1)
+except KeyboardInterrupt:
+    consumer.close()

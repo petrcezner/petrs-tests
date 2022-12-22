@@ -10,8 +10,6 @@ logger = logging.getLogger('producer.py')
 
 
 def delivery_report(err, msg):
-    """ Called once for each message produced to indicate delivery result.
-        Triggered by poll() or flush(). """
     if err is not None:
         logger.warning('Message delivery failed: {}'.format(err))
     else:
@@ -19,12 +17,6 @@ def delivery_report(err, msg):
 
 
 def publish_video(video_file):
-    """
-    Publish given video file to a specified Kafka topic.
-    Kafka Server is expected to be running on the localhost. Not partitioned.
-
-    :param video_file: path to video file <string>
-    """
     producer = Producer({'bootstrap.servers': 'localhost:29092'})
     video = cv2.VideoCapture(video_file)
 
@@ -46,10 +38,6 @@ def publish_video(video_file):
 
 
 def publish_camera():
-    """
-    Publish camera video stream to specified Kafka topic.
-    Kafka Server is expected to be running on the localhost. Not partitioned.
-    """
     producer = Producer({'bootstrap.servers': 'localhost:29092'})
     camera = cv2.VideoCapture(0)
 
@@ -58,7 +46,7 @@ def publish_camera():
             success, frame = camera.read()
             ret, buffer = cv2.imencode('.jpg', frame)
             producer.produce(topic, buffer.tobytes(), callback=delivery_report)
-            time.sleep(0.01)
+            time.sleep(0.001)
     except KeyboardInterrupt:
         camera.release()
         producer.flush()
