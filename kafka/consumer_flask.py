@@ -4,13 +4,13 @@ from confluent_kafka import Consumer
 topic = "distributed-video1"
 
 settings = {
-    'bootstrap.servers': 'localhost:29092',
+    'bootstrap.servers': 'localhost:9092',
     "group.id": "my-work-group",
     "client.id": "my-work-client-1",
     "enable.auto.commit": False,
     "session.timeout.ms": 6000,
     "max.partition.fetch.bytes": 10485880,
-    "default.topic.config": {"auto.offset.reset": "largest"},
+    "default.topic.config": {"auto.offset.reset": "earliest"},
 }
 consumer = Consumer(settings)
 

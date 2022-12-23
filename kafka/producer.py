@@ -8,17 +8,31 @@ import simplejpeg
 topic = "distributed-video1"
 
 logger = logging.getLogger('producer.py')
+config = {
+    'bootstrap.servers': 'localhost:9092',
+    'enable.idempotence': True,
+    'acks': 'all',
+    'retries': 100,
+    'max.in.flight.requests.per.connection': 5,
+    'compression.type': 'snappy',
+    'linger.ms': 5,
+    'batch.num.messages': 32
+}
+producer = Producer(config)
 
 
 def delivery_report(err, msg):
-    if err is not None:
-        logger.warning('Message delivery failed: {}'.format(err))
+    if err:
+        logger.error(f"Failed to deliver message: {msg.value()}: {err.str()}")
     else:
-        logger.info('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+        logger.info(f"msg produced. \n"
+                    f"Topic: {msg.topic()} \n" +
+                    f"Partition: {msg.partition()} \n" +
+                    f"Offset: {msg.offset()} \n" +
+                    f"Timestamp: {msg.timestamp()} \n")
 
 
 def publish_video(video_file):
-    producer = Producer({'bootstrap.servers': 'localhost:29092'})
     video = cv2.VideoCapture(video_file)
 
     logger.info('Publishing video...')
@@ -39,7 +53,6 @@ def publish_video(video_file):
 
 
 def publish_camera():
-    producer = Producer({'bootstrap.servers': 'localhost:29092'})
     camera = cv2.VideoCapture(0)
 
     try:
@@ -50,8 +63,8 @@ def publish_camera():
                                             quality=95,
                                             colorspace='BGR')
             producer.produce(topic, buffer, callback=delivery_report)
-            time.sleep(0.001)
             producer.poll(0)
+            time.sleep(0.001)
     except KeyboardInterrupt:
         camera.release()
         producer.flush()

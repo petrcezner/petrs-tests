@@ -238,3 +238,4 @@ data/
 *.whl
 *.tar.gz
 ./.devcontainers
+/kafka/configs/
