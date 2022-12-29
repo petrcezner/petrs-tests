@@ -9,14 +9,18 @@ topic = "distributed-video1"
 
 logger = logging.getLogger('producer.py')
 config = {
-    'bootstrap.servers': 'localhost:9092',
+    'bootstrap.servers': 'localhost:9093',
     'enable.idempotence': True,
     'acks': 'all',
     'retries': 100,
     'max.in.flight.requests.per.connection': 5,
     'compression.type': 'snappy',
     'linger.ms': 5,
-    'batch.num.messages': 32
+    'batch.num.messages': 32,
+    'security.protocol': 'sasl_plaintext',
+    'sasl.mechanism': 'PLAIN',
+    'sasl.username': 'wl',
+    'sasl.password': 'wl-secret'
 }
 producer = Producer(config)
 

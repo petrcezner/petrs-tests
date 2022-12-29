@@ -4,13 +4,17 @@ from confluent_kafka import Consumer
 topic = "distributed-video1"
 
 settings = {
-    'bootstrap.servers': 'localhost:9092',
+    'bootstrap.servers': 'localhost:9093',
     "group.id": "my-work-group",
     "client.id": "my-work-client-1",
     "enable.auto.commit": False,
     "session.timeout.ms": 6000,
     "max.partition.fetch.bytes": 10485880,
     "default.topic.config": {"auto.offset.reset": "earliest"},
+    'security.protocol': 'sasl_plaintext',
+    'sasl.mechanism': 'PLAIN',
+    'sasl.username': 'wl',
+    'sasl.password': 'wl-secret'
 }
 consumer = Consumer(settings)
 
