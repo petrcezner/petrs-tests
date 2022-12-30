@@ -21,7 +21,7 @@ fs = admin_client.create_topics(topic_list)
 
 for topic, f in fs.items():
     try:
-        f.result()  # The result itself is None
-        logger.info("Topic {} created".format(topic))
+        f.result()
+        logger.info(f"Topic {topic} created")
     except Exception as e:
-        logger.warning("Failed to create topic {}: {}".format(topic, e))
+        logger.warning(f"Failed to create topic {topic}: {e}")
