@@ -79,7 +79,7 @@ def publish_camera():
 
 
 if __name__ == '__main__':
-    if (len(sys.argv) > 1):
+    if len(sys.argv) > 1:
         video_path = sys.argv[1]
         publish_video(video_path)
     else:
