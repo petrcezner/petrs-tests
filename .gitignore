@@ -76,10 +76,16 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 ### PyCharm+all Patch ###
-# Ignores the whole .idea folder and all .iml files
-# See https://github.com/joeblau/gitignore.io/issues/186 and https://github.com/joeblau/gitignore.io/issues/360
+# Ignore everything but code style settings and run configurations
+# that are supposed to be shared within teams.
 
-.idea/
+.idea/*
+
+!.idea/codeStyles
+!.idea/runConfigurations
+.idea/workspace.xml
+
+# End of https://www.toptal.com/developers/gitignore/api/pycharm+all
 
 # Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
 

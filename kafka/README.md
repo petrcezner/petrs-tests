@@ -1,6 +1,6 @@
 # Kafka *How to*:
 1) create `*_jass.conf`  file with following schema:
-    ```json lines
+    ```
     KafkaServer {
         org.apache.kafka.common.security.plain.PlainLoginModule required
         username="username"
