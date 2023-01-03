@@ -1,0 +1,5 @@
+simplejpeg~=1.6.3
+flask~=2.2.2
+confluent-kafka==1.9.2
+pymongo==4.3.3
+asyncua==1.0.1
