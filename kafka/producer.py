@@ -1,11 +1,13 @@
+import json
 import logging
 import sys
 import time
 import cv2
 from confluent_kafka import Producer
+from bson import json_util
 import simplejpeg
 
-topic = "distributed-video1"
+topic = "video-test"
 
 logger = logging.getLogger('producer.py')
 config = {
@@ -66,7 +68,7 @@ def publish_camera():
             buffer = simplejpeg.encode_jpeg(frame,
                                             quality=95,
                                             colorspace='BGR')
-            producer.produce(topic, buffer, callback=delivery_report)
+            producer.produce(topic, json_util.dumps({'current_image': buffer}), callback=delivery_report)
             producer.poll(0)
             time.sleep(0.001)
     except KeyboardInterrupt:
@@ -79,6 +81,8 @@ def publish_camera():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     if len(sys.argv) > 1:
         video_path = sys.argv[1]
         publish_video(video_path)

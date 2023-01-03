@@ -32,7 +32,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zoo1:2181'
-      ZOOKEEPER SASL ENABLED: 'false'
+      ZOOKEEPER_SASL_ENABLED: 'false'
       KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:
       PLAINTEXT: SASL_PLAINTEXT:SASL_PLAINTEXT
@@ -40,12 +40,15 @@ services:
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
       KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/configs/kafka_server_jass.conf"
+      KAFKA_offsets_topic_replication_factor: 1
 #      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
     depends_on:
       - zoo1
     volumes:
       - /Users/petr/Projects/learning/petrs-tests/kafka/configs/kafka_server_jass.conf:/etc/kafka/configs/kafka_server_jass.conf
+#      - /Users/petr/Projects/learning/petrs-tests/kafka/configs/config.properties:/etc/kafka/server.properties
 
 
 # https://www.youtube.com/watch?v=bj5SKXanaAI
 # https://docs.oracle.com/en-us/iaas/Content/Streaming/Tasks/streaming-kafka-python-client-quickstart.htm
+# http://www.smartjava.org/content/setting-up-kafka-cluster-docker-copy/

@@ -1,7 +1,7 @@
 from flask import Flask, Response, render_template
 from confluent_kafka import Consumer
 
-topic = "distributed-video1"
+topic = "video-test"
 
 settings = {
     'bootstrap.servers': 'localhost:9093',
