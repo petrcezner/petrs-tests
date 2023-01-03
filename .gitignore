@@ -5,7 +5,11 @@
 ### PyCharm+all ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+# Ignore everything but code style settings and run configurations
+# that are supposed to be shared within teams.
 
+.idea/*
+.idea/workspace.xml
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
