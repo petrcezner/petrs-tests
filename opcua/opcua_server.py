@@ -20,9 +20,21 @@ async def main():
     # set up our own namespace, not really necessary but should as spec
     uri = "http://petrcezner.com/tests"
     idx = await server.register_namespace(uri)
+    qi_namespace = await server.register_namespace('"QIDataBlock"."QualityInspector"')
 
     # populating our address space
     # server.nodes, contains links to very common nodes like objects and root
+    var_1 = await server.nodes.objects.add_variable(f"ns={qi_namespace},i=1000",
+                                                    "StartInference",
+                                                    True,
+                                                    varianttype=ua.VariantType.Byte,
+                                                    datatype=None)
+    var_2 = await server.nodes.objects.add_variable(f"ns={qi_namespace},i=1001",
+                                                    "StopInference",
+                                                    True,
+                                                    varianttype=ua.VariantType.Byte,
+                                                    datatype=None)
+
     myobj = await server.nodes.objects.add_object(idx, "MyObject")
     myvar = await myobj.add_variable(idx, "MyVariable", 6.7)
     # Set MyVariable to be writable by clients
