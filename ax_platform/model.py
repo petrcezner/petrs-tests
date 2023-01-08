@@ -54,17 +54,42 @@ def test_transform(
     return transform
 
 
+class ResnetDatamodule(pl.LightningDataModule):
+    def __init__(self, train_path: Union[Path, str], val_path: Union[Path, str], test_path: Union[Path, str],
+                 batch_size: int = 32):
+        super().__init__()
+        self.train_path = train_path
+        self.val_path = val_path
+        self.test_path = test_path
+        self.batch_size = batch_size
+
+    def train_dataloader(self):
+        transform = train_transform()
+        img_train = ImageFolder(self.train_path, transform=transform)
+        return DataLoader(img_train, batch_size=self.batch_size, shuffle=True)
+
+    def val_dataloader(self):
+        transform = test_transform()
+
+        img_val = ImageFolder(self.val_path, transform=transform)
+
+        return DataLoader(img_val, batch_size=1, shuffle=False)
+
+    def test_dataloader(self):
+        transform = test_transform()
+
+        img_test = ImageFolder(self.test_path, transform=transform)
+
+        return DataLoader(img_test, batch_size=1, shuffle=False)
+
+
 class ResnetClassifier(pl.LightningModule):
     def __init__(
             self,
             num_classes: int,
-            train_path: Path,
-            vld_path: Path,
-            test_path: Path = None,
             resnet: str = "resnet18",
             optimizer: str = "adam",
             lr: float = 1e-3,
-            batch_size: int = 16,
             transfer: str = "DEFAULT",
             tune_fc_only: bool = True,
             momentum: Union[Tuple[float, float], float] = (0.9, 0.999),
@@ -115,11 +140,6 @@ class ResnetClassifier(pl.LightningModule):
         optimizer = self.optimizer(self.parameters(), **self.optimizer_args)
         return optimizer
 
-    def train_dataloader(self):
-        transform = train_transform()
-        img_train = ImageFolder(self.train_path, transform=transform)
-        return DataLoader(img_train, batch_size=self.batch_size, shuffle=True)
-
     def training_step(self, batch, batch_idx):
         x, y = batch
         preds = self(x)
@@ -144,25 +164,10 @@ class ResnetClassifier(pl.LightningModule):
         )
         return loss
 
-    def val_dataloader(self):
-        transform = test_transform()
-
-        img_val = ImageFolder(self.vld_path, transform=transform)
-
-        return DataLoader(img_val, batch_size=1, shuffle=False)
-
     def validation_step(self, batch, batch_idx):
         loss = self._shared_eval_step(batch, batch_idx)
         self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_acc", self.valid_acc, on_epoch=True, prog_bar=True, logger=True)
-        return loss, self.valid_acc
-
-    def test_dataloader(self):
-        transform = test_transform()
-
-        img_test = ImageFolder(self.test_path, transform=transform)
-
-        return DataLoader(img_test, batch_size=1, shuffle=False)
 
     def test_step(self, batch, batch_idx):
         loss = self._shared_eval_step(batch, batch_idx)
@@ -205,13 +210,10 @@ def _get_trainer(
 
 def fit(
         num_classes: int,
-        train_path: Path,
-        vld_path: Path,
-        test_path: Path = None,
+        dm: pl.LightningDataModule,
         resnet: str = "resnet18",
         optimizer: str = "adam",
         lr: float = 1e-3,
-        batch_size: int = 16,
         transfer: str = "DEFAULT",
         tune_fc_only: bool = True,
         max_epochs: int = 1000,
@@ -220,7 +222,9 @@ def fit(
         accelerator: str = "cpu",
         pretrained: bool = False,
         checkpoint_path: Path = None,
-):
+        momentum: Union[Tuple[float, float], float] = (0.9, 0.999),
+        weight_decay: float = 0
+) -> (pl.LightningModule, pl.Trainer):
     early_stop = pl.callbacks.EarlyStopping(
         monitor="train_loss",
         min_delta=0.01,
@@ -244,32 +248,30 @@ def fit(
         model = ResnetClassifier.load_from_checkpoint(
             checkpoint_path,
             num_classes=num_classes,
-            train_path=train_path,
-            vld_path=vld_path,
-            test_path=test_path,
             resnet=resnet,
             optimizer=optimizer,
             lr=lr,
-            batch_size=batch_size,
             transfer=transfer,
             tune_fc_only=tune_fc_only,
+            momentum=momentum,
+            weight_decay=weight_decay,
         )
     else:
         model = ResnetClassifier(
             num_classes=num_classes,
-            train_path=train_path,
-            vld_path=vld_path,
-            test_path=test_path,
             resnet=resnet,
             optimizer=optimizer,
             lr=lr,
-            batch_size=batch_size,
             transfer=transfer,
             tune_fc_only=tune_fc_only,
+            momentum=momentum,
+            weight_decay=weight_decay,
         )
 
-    trainer.fit(model)
-    return model
+    trainer.fit(model,
+                datamodule=dm)
+    trainer.validate()
+    return model, trainer
 
 
 def test(
@@ -317,21 +319,17 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--num_classes", type=int, default=10, help="Number of classes in data")
     args = parser.parse_args()
 
-    dataset = ImageFolder(
-        Path(args.data_path / "validation"),
-        transform=transforms.Compose([transforms.Resize(256), transforms.ToTensor()]),
-    )
+    dm = ResnetDatamodule(train_path=Path(args.data_path / "train"),
+                          val_path=Path(args.data_path / "validation"),
+                          test_path=Path(args.data_path / "validation"),
+                          batch_size=16, )
 
     if args.train:
         model_ = fit(
             num_classes=args.num_classes,
-            train_path=Path(args.data_path / "train"),
-            vld_path=Path(args.data_path / "validation"),
-            test_path=Path(args.data_path / "validation"),
             resnet="resnet50",
             optimizer="adam",
             lr=1e-3,
-            batch_size=16,
             transfer="DEFAULT",
             tune_fc_only=True,
             max_epochs=1000,
@@ -340,4 +338,5 @@ if __name__ == "__main__":
             accelerator="auto",
             pretrained=False,
             checkpoint_path=Path(args.checkpoint_path),
+            dm=dm
         )
