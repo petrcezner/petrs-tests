@@ -63,6 +63,9 @@ class ResnetDatamodule(pl.LightningDataModule):
         self.test_path = test_path
         self.batch_size = batch_size
 
+    def setup(self, stage: str) -> None:
+        pass
+
     def train_dataloader(self):
         transform = train_transform()
         img_train = ImageFolder(self.train_path, transform=transform)
@@ -92,7 +95,8 @@ class ResnetClassifier(pl.LightningModule):
             lr: float = 1e-3,
             transfer: str = "DEFAULT",
             tune_fc_only: bool = True,
-            momentum: Union[Tuple[float, float], float] = (0.9, 0.999),
+            betas: Union[Tuple[float, float], float] = (0.9, 0.999),
+            momentum: float = 0,
             weight_decay: float = 0
     ):
         super().__init__()
@@ -110,12 +114,18 @@ class ResnetClassifier(pl.LightningModule):
             "wide_resnet101": models.wide_resnet101_2,
         }
         self.model = resnets[resnet](weights=transfer)
-        optimizers = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
-        optimizer_args = {'adam': 'betas', 'sgd': 'momentum'}
-        self.optimizer = optimizers.get(optimizer, 'adam')
-        self.optimizer_args = {optimizer_args[optimizer]: momentum,
-                               'weight_decay': weight_decay,
-                               'lr': self.lr}
+        if optimizer == 'adam':
+            self.optimizer = torch.optim.Adam
+            self.optimizer_args = {'betas': betas,
+                                   'weight_decay': weight_decay,
+                                   'lr': self.lr
+                                   }
+        else:
+            self.optimizer = torch.optim.SGD
+            self.optimizer_args = {'momentum': momentum,
+                                   'weight_decay': weight_decay,
+                                   'lr': self.lr
+                                   }
         self.criterion = (
             torch.nn.BCEWithLogitsLoss()
             if num_classes == 2
@@ -124,9 +134,11 @@ class ResnetClassifier(pl.LightningModule):
 
         linear_size = list(self.model.children())[-1].in_features
         self.model.fc = torch.nn.Linear(linear_size, num_classes)
-
-        self.train_acc = torchmetrics.Accuracy(num_classes=num_classes)
-        self.valid_acc = torchmetrics.Accuracy(num_classes=num_classes)
+        task = "multiclass"
+        if num_classes == 2:
+            task = "binary"
+        self.train_acc = torchmetrics.Accuracy(num_classes=num_classes, task=task)
+        self.valid_acc = torchmetrics.Accuracy(num_classes=num_classes, task=task)
 
         if tune_fc_only:
             for child in list(self.model.children())[:-1]:
@@ -192,7 +204,7 @@ def _get_trainer(
         max_epochs: int = 1000,
         use_gpus: bool = True,
         devices: int = 1,
-        accelerator: str = "cpu",
+        accelerator: str = "auto",
         early_stop: pl.callbacks = None,
         model_checkpoint: pl.callbacks = None,
 ):
@@ -232,7 +244,7 @@ def fit(
         verbose=True,
         mode="min",
         check_on_train_epoch_end=True,
-    ),
+    )
     model_checkpoint = pl.callbacks.ModelCheckpoint(
         monitor="train_loss", save_top_k=1, mode="min"
     )
@@ -268,10 +280,9 @@ def fit(
             weight_decay=weight_decay,
         )
 
-    trainer.fit(model,
-                datamodule=dm)
-    trainer.validate()
-    return model, trainer
+    trainer.fit(model, datamodule=dm)
+    result = trainer.validate(datamodule=dm, ckpt_path='best')
+    return model, trainer, result
 
 
 def test(

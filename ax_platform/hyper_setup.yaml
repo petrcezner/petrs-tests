@@ -1,0 +1,67 @@
+ax:
+  experiment_name: 'predator_detector'
+  objective_name: 'val_acc'
+  minimize: true
+  total_trials: 2
+  random_seed: 42
+  arms_per_trial: 1
+  parameters:
+    [
+      {
+        name: 'resnet',
+        type: 'choice',
+        values: [ 'resnet18', 'resnet34' ],
+        value_type: 'str'
+      },
+      {
+        name: 'accelerator',
+        type: 'fixed',
+        value: 'cpu',
+        value_type: 'str'
+      },
+      {
+        name: 'num_classes',
+        type: 'fixed',
+        value: 2,
+        value_type: 'int'
+      },
+      {
+        name: 'max_epochs',
+        type: 'fixed',
+        value: 2,
+        value_type: 'int'
+      },
+      {
+        name: 'optimizer',
+        type: 'fixed',
+        value: 'adam',
+        value_type: 'str'
+      },
+      {
+        name: 'lr',
+        type: 'range',
+        bounds: [ 0.0001, 0.4 ],
+        value_type: 'float',
+        log_scale: True
+      },
+#      {
+#        name: 'momentum',
+#        type: 'range',
+#        bounds: [ 0.9, 0.999 ],
+#        value_type: 'float'
+#      },
+      {
+        name: 'weight_decay',
+        type: 'range',
+        bounds: [ .0, 0.1 ],
+        value_type: 'float'
+      },
+    ]
+data_module:
+  _target_: ax_platform.model.ResnetDatamodule
+  train_path: '/Users/petr/Projects/datasentics/datasets/alien_vs_predator_thumbnails/data/train'
+  val_path: '/Users/petr/Projects/datasentics/datasets/alien_vs_predator_thumbnails/data/validation'
+  test_path: '/Users/petr/Projects/datasentics/datasets/alien_vs_predator_thumbnails/data/validation'
+fit_function:
+  _target_: ax_platform.model.fit
+save_to_file: true
