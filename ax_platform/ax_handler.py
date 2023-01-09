@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -7,6 +8,8 @@ from ax.service.managed_loop import optimize
 from ax.service.ax_client import AxClient
 
 from ax_problem import AxProblem
+
+logger = logging.getLogger(__name__)
 
 
 class AxHyperparameterSearch:
@@ -19,7 +22,7 @@ class AxHyperparameterSearch:
         best_parameters, values, experiment, model = optimize(**OmegaConf.to_container(self.cfg.ax),
                                                               evaluation_function=self.evaluate)
         if self.cfg.save_to_file:
-            experiment_root = Path(f'out/experiments/{self.cfg.ax.name}')
+            experiment_root = Path(f'out/experiments/{self.cfg.ax.experiment_name}')
             experiment_root.mkdir(parents=True, exist_ok=True)
             filename = Path(f'ax_experiment.json')
             self.ax_client.save_to_json_file(str(experiment_root / filename))
@@ -40,13 +43,16 @@ class AxHyperparameterSearch:
         return
 
     def save_result(self, best_parameters, exp_name):
-        experiment_df = self.ax_client.generation_strategy.trials_as_df
-        parameters_cfg = OmegaConf.create(best_parameters)
         now_str = datetime.now().strftime('%Y%m%dT%H%M%S')
+        try:
+            experiment_df = self.ax_client.generation_strategy.trials_as_df
+            experiment_df.to_csv(f'out/experiments/{exp_name}_{now_str}.csv', index=False)
+        except ValueError as err:
+            logger.warning(f'{err}')
+        parameters_cfg = OmegaConf.create(best_parameters)
         experiment_root = Path(f'out/experiments/{exp_name}')
         experiment_root.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(parameters_cfg, f'out/experiments/{exp_name}_{now_str}.yml')
-        experiment_df.to_csv(f'out/experiments/{exp_name}_{now_str}.csv', index=False)
 
 
 if __name__ == '__main__':
