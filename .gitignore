@@ -245,3 +245,5 @@ data/
 *.tar.gz
 ./.devcontainers
 /kafka/configs/
+*/configs/*
+*/lightning_logs
