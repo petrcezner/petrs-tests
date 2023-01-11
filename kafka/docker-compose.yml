@@ -1,0 +1,55 @@
+version: '3.4'
+services:
+  zoo1:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zoo1
+    container_name: zoo1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zoo1:2888:3888
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/configs/kafka_server_jass.conf"
+    volumes:
+      - /Users/petr/Projects/learning/petrs-tests/kafka/configs/kafka_server_jass.conf:/etc/kafka/configs/kafka_server_jass.conf
+  #      ALLOW_ANONYMOUS_LOGIN: no
+  #      ZOO_ENABLE_AUTH: yes
+  #      ZOO_SERVER_USERS: admin,bob
+  #      ZOO_SERVER_PASSWORDS: admin-secret,bob-secret
+  #      ZOO_CLIENT_USER: bob
+  #      ZOO_CLIENT_PASSWORD: bob_secret
+
+  kafka1:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka1
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "9999:9999"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zoo1:2181'
+      ZOOKEEPER_SASL_ENABLED: 'false'
+      KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:
+      PLAINTEXT: SASL_PLAINTEXT:SASL_PLAINTEXT
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SASL_PLAINTEXT
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/configs/kafka_server_jass.conf"
+      KAFKA_offsets_topic_replication_factor: 1
+    #      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+    depends_on:
+      - zoo1
+    volumes:
+      - /Users/petr/Projects/learning/petrs-tests/kafka/configs/kafka_server_jass.conf:/etc/kafka/configs/kafka_server_jass.conf
+#      - /Users/petr/Projects/learning/petrs-tests/kafka/configs/config.properties:/etc/kafka/server.properties
+
+
+# https://www.youtube.com/watch?v=bj5SKXanaAI
+# https://docs.oracle.com/en-us/iaas/Content/Streaming/Tasks/streaming-kafka-python-client-quickstart.htm
+# http://www.smartjava.org/content/setting-up-kafka-cluster-docker-copy/
+# https://egkatzioura.com/2020/11/16/kafka-zookeeper-for-development-connecting-brokers-to-the-ensemble/
