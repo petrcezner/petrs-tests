@@ -238,3 +238,5 @@ data/
 *.whl
 *.tar.gz
 ./.devcontainers
+*/configs/*
+*/lightning_logs
