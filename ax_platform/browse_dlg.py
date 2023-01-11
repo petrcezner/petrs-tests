@@ -16,4 +16,4 @@ if __name__ == "__main__":
     app = QApplication([directory])
     fname = QFileDialog.getOpenFileName(None, "Select a file...",
                                         directory, filter="All files (*)")
-    print(fname[0])
+    print(f'loading: {fname[0]}')
