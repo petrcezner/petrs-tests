@@ -22,10 +22,7 @@ class AxHyperparameterSearch:
         best_parameters, values, experiment, model = optimize(**OmegaConf.to_container(self.cfg.ax),
                                                               evaluation_function=self.evaluate)
         if self.cfg.save_to_file:
-            experiment_root = Path(f'out/experiments/{self.cfg.ax.experiment_name}')
-            experiment_root.mkdir(parents=True, exist_ok=True)
-            filename = Path(f'ax_experiment.json')
-            self.ax_client.save_to_json_file(str(experiment_root / filename))
+            self.save_current_experiment(self.cfg.ax.experiment_name)
         self.save_result(best_parameters, self.cfg.ax.experiment_name)
 
     def cycle_call(self):
@@ -34,13 +31,16 @@ class AxHyperparameterSearch:
             parameters, trial_index = self.ax_client.get_next_trial()
             self.ax_client.complete_trial(trial_index=trial_index, raw_data=self.evaluate(parameters))
             if self.cfg.save_to_file:
-                experiment_root = Path(f'out/experiments/{self.cfg.ax.name}')
-                experiment_root.mkdir(parents=True, exist_ok=True)
-                filename = Path(f'ax_experiment.json')
-                self.ax_client.save_to_json_file(str(experiment_root / filename))
+                self.save_current_experiment(self.cfg.ax.name)
         best_parameters, values = self.ax_client.get_best_parameters()
         self.save_result(best_parameters, self.cfg.ax.name)
         return
+
+    def save_current_experiment(self, experiment_name):
+        experiment_root = Path(f'out/experiments/{experiment_name}')
+        experiment_root.mkdir(parents=True, exist_ok=True)
+        filename = Path(f'ax_experiment.json')
+        self.ax_client.save_to_json_file(str(experiment_root / filename))
 
     def save_result(self, best_parameters, exp_name):
         now_str = datetime.now().strftime('%Y%m%dT%H%M%S')
