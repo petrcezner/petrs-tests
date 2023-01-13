@@ -54,3 +54,6 @@ services:
 # https://docs.oracle.com/en-us/iaas/Content/Streaming/Tasks/streaming-kafka-python-client-quickstart.htm
 # http://www.smartjava.org/content/setting-up-kafka-cluster-docker-copy/
 # https://egkatzioura.com/2020/11/16/kafka-zookeeper-for-development-connecting-brokers-to-the-ensemble/
+# https://github.com/startreedata/pinot-recipes/tree/main/recipes/kafka-sasl
+# https://dev.startree.ai/docs/pinot/recipes/kafka-sasl
+# https://cwiki.apache.org/confluence/display/ZOOKEEPER/Client-Server+mutual+authentication
