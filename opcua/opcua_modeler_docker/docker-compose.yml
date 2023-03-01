@@ -1,0 +1,16 @@
+version: "3.7"
+
+volumes:
+  prediction:
+
+services:
+  opcua-modeler:
+    container_name: opcua-modeler
+#    platform: linux/amd64
+    build: ""
+    image: opcua-modeler:local
+    env_file:
+      - .env
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    user: "qtuser"
