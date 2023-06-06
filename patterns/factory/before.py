@@ -80,30 +80,76 @@ class WAVAudioExporter(AudioExporter):
         print(f"Exporting audio data in WAV format to {folder}.")
 
 
-def main() -> None:
-    """Main function."""
+class ExporterFactoryAbstractClass(ABC):
+    """This class will provide interface for video and audio exporters"""
 
-    # read the desired export quality
+    def get_video_exporter(self) -> VideoExporter:
+        """This func returns video exporter object"""
+
+    def get_audio_exporter(self) -> AudioExporter:
+        """This func returns video exporter"""
+
+
+class LowExportFactory(ExporterFactoryAbstractClass):
+    """This class will provide interface for video and audio exporters"""
+
+    def get_video_exporter(self) -> VideoExporter:
+        """This func returns video exporter object"""
+        return H264BPVideoExporter()
+
+    def get_audio_exporter(self) -> AudioExporter:
+        """This func returns video exporter"""
+        return AACAudioExporter()
+
+
+class HighExporterFactory(ExporterFactoryAbstractClass):
+    """This class will provide interface for video and audio exporters"""
+
+    def get_video_exporter(self) -> VideoExporter:
+        """This func returns video exporter object"""
+        return H264Hi422PVideoExporter()
+
+    def get_audio_exporter(self) -> AudioExporter:
+        """This func returns video exporter"""
+        return AACAudioExporter()
+
+
+class MasterExporterFactory(ExporterFactoryAbstractClass):
+    """This class will provide interface for video and audio exporters"""
+
+    def get_video_exporter(self) -> VideoExporter:
+        """This func returns video exporter object"""
+        return LosslessVideoExporter()
+
+    def get_audio_exporter(self) -> AudioExporter:
+        """This func returns video exporter"""
+        return WAVAudioExporter()
+
+
+EXPORT_DICT = {"low": LowExportFactory,
+               "high": HighExporterFactory,
+               "master": MasterExporterFactory}
+
+EXPORT_DICT_TUPLE = {"low": (H264BPVideoExporter(), AACAudioExporter()),
+                     "high": (H264Hi422PVideoExporter(), AACAudioExporter()),
+                     "master": (LosslessVideoExporter(), WAVAudioExporter())}
+
+
+def get_user_input() -> str:
     export_quality: str
     while True:
         export_quality = input("Enter desired output quality (low, high, master): ")
-        if export_quality in {"low", "high", "master"}:
-            break
+        if export_quality in EXPORT_DICT:
+            return export_quality
         print(f"Unknown output quality option: {export_quality}.")
 
+
+def main(fac: tuple[VideoExporter, AudioExporter]) -> None:
+    """Main function."""
     # create the video and audio exporters
-    video_exporter: VideoExporter
-    audio_exporter: AudioExporter
-    if export_quality == "low":
-        video_exporter = H264BPVideoExporter()
-        audio_exporter = AACAudioExporter()
-    elif export_quality == "high":
-        video_exporter = H264Hi422PVideoExporter()
-        audio_exporter = AACAudioExporter()
-    else:
-        # default: master quality
-        video_exporter = LosslessVideoExporter()
-        audio_exporter = WAVAudioExporter()
+    video_exporter, audio_exporter = fac
+    # video_exporter: VideoExporter = fac.get_video_exporter()
+    # audio_exporter: AudioExporter = fac.get_audio_exporter()
 
     # prepare the export
     video_exporter.prepare_export("placeholder_for_video_data")
@@ -116,4 +162,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    fac_str = get_user_input()
+    main(EXPORT_DICT_TUPLE[fac_str])
