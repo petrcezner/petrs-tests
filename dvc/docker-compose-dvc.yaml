@@ -1,0 +1,15 @@
+version: "3.7"
+
+volumes:
+  prediction:
+
+services:
+  dvc-remote-testing:
+    container_name: dvc-remote-testing
+    build:
+      context: ""
+      dockerfile: "dvc.dockerfile"
+    image: dvc-remote-testing
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
