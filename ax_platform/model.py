@@ -1,21 +1,18 @@
-import configparser
 from pathlib import Path
 from typing import Tuple, Union
 
+import pytorch_lightning as pl
 import torch
 import torchmetrics
 import torchvision.models as models
 from torchvision import transforms
-from torchvision.datasets import ImageFolder
-from torch.utils.data import DataLoader
-import pytorch_lightning as pl
 
 
 def train_transform(
-        flip: bool = True,
-        crop: int = 224,
-        mean: list = [0.485, 0.456, 0.406],
-        std: list = [0.229, 0.224, 0.225],
+    flip: bool = True,
+    crop: int = 224,
+    mean: list = [0.485, 0.456, 0.406],
+    std: list = [0.229, 0.224, 0.225],
 ):
     if flip:
         transform = transforms.Compose(
@@ -38,10 +35,10 @@ def train_transform(
 
 
 def test_transform(
-        resize: int = 256,
-        crop: int = 224,
-        mean: list = [0.485, 0.456, 0.406],
-        std: list = [0.229, 0.224, 0.225],
+    resize: int = 256,
+    crop: int = 224,
+    mean: list = [0.485, 0.456, 0.406],
+    std: list = [0.229, 0.224, 0.225],
 ):
     transform = transforms.Compose(
         [
@@ -55,8 +52,13 @@ def test_transform(
 
 
 class ResnetDatamodule(pl.LightningDataModule):
-    def __init__(self, train_path: Union[Path, str], val_path: Union[Path, str], test_path: Union[Path, str],
-                 batch_size: int = 32):
+    def __init__(
+        self,
+        train_path: Union[Path, str],
+        val_path: Union[Path, str],
+        test_path: Union[Path, str],
+        batch_size: int = 32,
+    ):
         super().__init__()
         self.train_path = train_path
         self.val_path = val_path
@@ -88,16 +90,16 @@ class ResnetDatamodule(pl.LightningDataModule):
 
 class ResnetClassifier(pl.LightningModule):
     def __init__(
-            self,
-            num_classes: int,
-            resnet: str = "resnet18",
-            optimizer: str = "adam",
-            lr: float = 1e-3,
-            transfer: str = "DEFAULT",
-            tune_fc_only: bool = True,
-            betas: Union[Tuple[float, float], float] = (0.9, 0.999),
-            momentum: float = 0,
-            weight_decay: float = 0
+        self,
+        num_classes: int,
+        resnet: str = "resnet18",
+        optimizer: str = "adam",
+        lr: float = 1e-3,
+        transfer: str = "DEFAULT",
+        tune_fc_only: bool = True,
+        betas: Union[Tuple[float, float], float] = (0.9, 0.999),
+        momentum: float = 0,
+        weight_decay: float = 0,
     ):
         super().__init__()
 
@@ -114,23 +116,13 @@ class ResnetClassifier(pl.LightningModule):
             "wide_resnet101": models.wide_resnet101_2,
         }
         self.model = resnets[resnet](weights=transfer)
-        if optimizer == 'adam':
+        if optimizer == "adam":
             self.optimizer = torch.optim.Adam
-            self.optimizer_args = {'betas': betas,
-                                   'weight_decay': weight_decay,
-                                   'lr': self.lr
-                                   }
+            self.optimizer_args = {"betas": betas, "weight_decay": weight_decay, "lr": self.lr}
         else:
             self.optimizer = torch.optim.SGD
-            self.optimizer_args = {'momentum': momentum,
-                                   'weight_decay': weight_decay,
-                                   'lr': self.lr
-                                   }
-        self.criterion = (
-            torch.nn.BCEWithLogitsLoss()
-            if num_classes == 2
-            else torch.nn.CrossEntropyLoss()
-        )
+            self.optimizer_args = {"momentum": momentum, "weight_decay": weight_decay, "lr": self.lr}
+        self.criterion = torch.nn.BCEWithLogitsLoss() if num_classes == 2 else torch.nn.CrossEntropyLoss()
 
         linear_size = list(self.model.children())[-1].in_features
         self.model.fc = torch.nn.Linear(linear_size, num_classes)
@@ -163,9 +155,7 @@ class ResnetClassifier(pl.LightningModule):
             self.train_acc(preds, y.to(torch.long))
         else:
             self.train_acc(preds, y)
-        self.log(
-            "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True
-        )
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log(
             "train_acc",
             self.train_acc,
@@ -201,12 +191,12 @@ class ResnetClassifier(pl.LightningModule):
 
 
 def _get_trainer(
-        max_epochs: int = 1000,
-        use_gpus: bool = True,
-        devices: int = 1,
-        accelerator: str = "auto",
-        early_stop: pl.callbacks = None,
-        model_checkpoint: pl.callbacks = None,
+    max_epochs: int = 1000,
+    use_gpus: bool = True,
+    devices: int = 1,
+    accelerator: str = "auto",
+    early_stop: pl.callbacks = None,
+    model_checkpoint: pl.callbacks = None,
 ):
     callbacks = [early_stop, model_checkpoint]
 
@@ -221,21 +211,21 @@ def _get_trainer(
 
 
 def fit(
-        num_classes: int,
-        dm: pl.LightningDataModule,
-        resnet: str = "resnet18",
-        optimizer: str = "adam",
-        lr: float = 1e-3,
-        transfer: str = "DEFAULT",
-        tune_fc_only: bool = True,
-        max_epochs: int = 1000,
-        use_gpus: bool = True,
-        devices: int = 1,
-        accelerator: str = "cpu",
-        pretrained: bool = False,
-        checkpoint_path: Path = None,
-        momentum: Union[Tuple[float, float], float] = (0.9, 0.999),
-        weight_decay: float = 0
+    num_classes: int,
+    dm: pl.LightningDataModule,
+    resnet: str = "resnet18",
+    optimizer: str = "adam",
+    lr: float = 1e-3,
+    transfer: str = "DEFAULT",
+    tune_fc_only: bool = True,
+    max_epochs: int = 1000,
+    use_gpus: bool = True,
+    devices: int = 1,
+    accelerator: str = "cpu",
+    pretrained: bool = False,
+    checkpoint_path: Path = None,
+    momentum: Union[Tuple[float, float], float] = (0.9, 0.999),
+    weight_decay: float = 0,
 ) -> (pl.LightningModule, pl.Trainer):
     early_stop = pl.callbacks.EarlyStopping(
         monitor="train_loss",
@@ -245,9 +235,7 @@ def fit(
         mode="min",
         check_on_train_epoch_end=True,
     )
-    model_checkpoint = pl.callbacks.ModelCheckpoint(
-        monitor="train_loss", save_top_k=1, mode="min"
-    )
+    model_checkpoint = pl.callbacks.ModelCheckpoint(monitor="train_loss", save_top_k=1, mode="min")
     trainer = _get_trainer(
         max_epochs=max_epochs,
         use_gpus=use_gpus,
@@ -281,22 +269,20 @@ def fit(
         )
 
     trainer.fit(model, datamodule=dm)
-    result = trainer.validate(datamodule=dm, ckpt_path='best')
+    result = trainer.validate(datamodule=dm, ckpt_path="best")
     return model, trainer, result
 
 
 def test(
-        model,
-        max_epochs: int = 1000,
-        use_gpus: bool = True,
-        devices: bool = True,
-        accelerator: str = "cpu",
-        early_stop: transforms.Compose = None,
-        model_checkpoint: transforms.Compose = None,
+    model,
+    max_epochs: int = 1000,
+    use_gpus: bool = True,
+    devices: bool = True,
+    accelerator: str = "cpu",
+    early_stop: transforms.Compose = None,
+    model_checkpoint: transforms.Compose = None,
 ):
-    trainer = _get_trainer(
-        max_epochs, use_gpus, devices, accelerator, early_stop, model_checkpoint
-    )
+    trainer = _get_trainer(max_epochs, use_gpus, devices, accelerator, early_stop, model_checkpoint)
     trainer.test(model)
 
 
@@ -315,11 +301,16 @@ if __name__ == "__main__":
         help="If true, model is train on dataset provided by arguments. Else, detection is preformed.",
     )
     parser.add_argument(
-        "-d", "--data_path", type=Path, default="", help="Path to data folder. It is expected, that the folder for"
-                                                         " training is named: training, for validation: validation."
+        "-d",
+        "--data_path",
+        type=Path,
+        default="",
+        help="Path to data folder. It is expected, that the folder for"
+        " training is named: training, for validation: validation.",
     )
-    parser.add_argument('--predict_with_class', action='store_true',
-                        help='If true, model returns images with detection dictionary.')
+    parser.add_argument(
+        "--predict_with_class", action="store_true", help="If true, model returns images with detection dictionary."
+    )
     parser.add_argument(
         "-c",
         "--checkpoint_path",
@@ -330,10 +321,12 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--num_classes", type=int, default=10, help="Number of classes in data")
     args = parser.parse_args()
 
-    dm = ResnetDatamodule(train_path=Path(args.data_path / "train"),
-                          val_path=Path(args.data_path / "validation"),
-                          test_path=Path(args.data_path / "validation"),
-                          batch_size=16, )
+    dm = ResnetDatamodule(
+        train_path=Path(args.data_path / "train"),
+        val_path=Path(args.data_path / "validation"),
+        test_path=Path(args.data_path / "validation"),
+        batch_size=16,
+    )
 
     if args.train:
         model_ = fit(
@@ -349,5 +342,5 @@ if __name__ == "__main__":
             accelerator="auto",
             pretrained=False,
             checkpoint_path=Path(args.checkpoint_path),
-            dm=dm
+            dm=dm,
         )

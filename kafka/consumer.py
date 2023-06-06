@@ -1,4 +1,5 @@
 import cv2
+
 # import numpy as np
 import simplejpeg
 from confluent_kafka import Consumer
@@ -6,7 +7,7 @@ from confluent_kafka import Consumer
 topic = "distributed-video1"
 
 settings = {
-    'bootstrap.servers': 'localhost:29092',
+    "bootstrap.servers": "localhost:29092",
     "group.id": "my-work-group",
     "client.id": "my-work-client-1",
     "enable.auto.commit": False,
@@ -35,11 +36,11 @@ try:
         if msg.error():
             print("Consumer error: {}".format(msg.error()))
             continue
-        img = simplejpeg.decode_jpeg(msg.value(), colorspace='BGR')
+        img = simplejpeg.decode_jpeg(msg.value(), colorspace="BGR")
         # img = cv2.imdecode(np.fromstring(msg.value(), np.uint8),
         #                    cv2.IMREAD_COLOR)
 
-        cv2.imshow('img', img)
+        cv2.imshow("img", img)
         cv2.waitKey(1)
 except KeyboardInterrupt:
     consumer.close()

@@ -1,6 +1,6 @@
+import hydra
 import omegaconf
 import pytorch_lightning as pl
-import hydra
 
 
 class AxProblem:
@@ -11,4 +11,4 @@ class AxProblem:
 
     def __call__(self, params):
         model, trainer, result = hydra.utils.instantiate(self.fit_function, dm=self.dm, **params)
-        return {r: (result[0][r], .0) for r in result[0]}
+        return {r: (result[0][r], 0.0) for r in result[0]}

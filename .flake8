@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 120
+per-file-ignores =
+    # E401 - imported, but unused
+    __init__.py: F401
+extend-ignore =
+    # F403, F405 are related to star imports
+    F403,
+    F405,
+    # E203 - black compatibility, see https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
+    E203,
+    # E501 - ignore long lines (e.g., in strings/comments), code is handled by black
+    E501,
+    # E741 - ignore variables named 'l' - used mostly in list comprehensions involving labels
+    E741

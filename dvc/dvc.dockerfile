@@ -11,7 +11,3 @@ RUN pip install -r requirements.txt
 COPY ./test_download.py /app/test_download.py
 ENTRYPOINT [ "python" ]
 CMD [ "./test_download.py"]
-
-
-
-
