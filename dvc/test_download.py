@@ -19,8 +19,8 @@ def list_files(directory: str) -> None:
             print(file_path)
 
 
-url = f"https://{os.environ['GITHUB_TOKEN']}@https://github.com/DataSentics/qi-project-template.git"
-fs = DVCFileSystem(url, rev="v1")
+url = f"https://petrcezner:{os.environ['GITHUB_TOKEN']}@https://github.com/DataSentics/qi-project-template.git"
+fs = DVCFileSystem(url, rev="v3")
 
 fs.get("data/image_folder_datasets", "./data/", recursive=True)
 
